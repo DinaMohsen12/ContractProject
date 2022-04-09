@@ -1,0 +1,28 @@
+create  table clients (
+client_id number (4),
+client_name  varchar2(100),
+client_address varchar2(100),
+client_notess  varchar2(100)
+);
+alter table clients add constraint client_id primary key (client_id);
+create table contracts (
+contract_id number(4),
+contract_startdate date,
+contract_enddate date,
+payments_installments_num number (10),
+contract_total_fees number (10),
+contract_deposit_fees number(10),
+client_id number(4),
+contract_payment_type varchar2(100),
+notes varchar2(100)
+);
+alter  table  contracts add constraint contract_num primary key (contract_id);
+alter  table  contracts add constraint new_ref foreign key  (client_id) references clients (client_id);
+create table installments (
+installment_id number (4)  constraint cons_id primary key ,
+contract_id number (4)  ,
+installment_date date,
+installment_amount number(10),
+paid number(4)
+);
+alter  table  installments add constraint con_ref foreign key  (contract_id) references contracts (contract_id);

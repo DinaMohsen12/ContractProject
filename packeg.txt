@@ -1,0 +1,5 @@
+create or replace package insertandupdate 
+is 
+  procedure insertinstll (conid number);
+   procedure update_payment  ;
+end;

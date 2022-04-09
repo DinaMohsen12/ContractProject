@@ -1,0 +1,90 @@
+create or replace package body insertandupdate
+is
+ procedure insertinstll (conid number)
+is
+sdate CONTRACTS.CONTRACT_STARTDATE%type;
+ edate CONTRACTS.CONTRACT_ENDDATE%type;
+ payment  CONTRACTS.CONTRACT_PAYMENT_TYPE%type;
+ tfees CONTRACTS.CONTRACT_TOTAL_FEES%type;
+ dfees CONTRACTS.CONTRACT_DEPOSIT_FEES%type;
+ paynum CONTRACTS.PAYMENTS_INSTALLMENTS_NUM%type;
+ instamount number(10,2);
+begin
+select contract_startdate, contract_enddate,contract_payment_type,contract_total_fees, contract_deposit_fees,payments_installments_num
+ into sdate,edate,payment , tfees,dfees,paynum
+  from contracts where contract_id=conid;
+  ------------------------------------------------------
+while sdate < edate   loop
+if payment='ANNUAL' then
+instamount :=trunc((tfees-nvl(dfees,0))/paynum);
+insert into installments (installment_id,contract_id,installment_date,installment_amount,paid) values
+(insallseq.nextval,conid,sdate,instamount,0); 
+dbms_output.put_line('startdate'||sdate||' totalpat '||instamount);
+sdate :=  add_months(sdate,12);
+--------------------------------------------
+
+elsif   payment='QUARTER'
+then 
+instamount :=trunc((tfees-nvl(dfees,0))/paynum);
+insert into installments (installment_id,contract_id,installment_date,installment_amount,paid) values
+(insallseq.nextval,conid,sdate,instamount,0); 
+dbms_output.put_line('startdate'||sdate||'  totalpat '||instamount);
+sdate :=  add_months(sdate,3);
+------------------------------------------------
+
+elsif   payment='HALF_ANNUAL'
+then 
+instamount :=trunc((tfees-nvl(dfees,0))/paynum);
+insert into installments (installment_id,contract_id,installment_date,installment_amount,paid) values
+(insallseq.nextval,conid,sdate,instamount,0); 
+dbms_output.put_line('startdate'||sdate||'  totalpat '||instamount);
+sdate :=  add_months(sdate,6);
+------------------------------------------
+elsif   payment='MONTHLY'
+then 
+instamount :=trunc((tfees-nvl(dfees,0))/paynum);
+insert into installments (installment_id,contract_id,installment_date,installment_amount,paid) values
+(insallseq.nextval,conid,sdate,instamount,0); 
+dbms_output.put_line('startdate'||sdate||'  totalpat '||instamount);
+sdate :=  add_months(sdate,1);
+
+end if;
+end loop;
+end;
+-------------------------------------------------
+ procedure update_payment 
+IS
+cursor cur_payment is select * from contracts;
+calc_annual  number(8,2);
+calc_half    number(8,2);
+calc_quarter  number (8,2);
+Mnthly    number(8,2);
+begin
+for pay_record in   cur_payment  loop
+if pay_record.contract_payment_type='ANNUAL' then
+calc_annual := trunc(months_between(pay_record.contract_enddate,pay_record.contract_startdate)/12);
+dbms_output.put_line('id '||pay_record.client_id||' annual '||calc_annual ||' contract'|| pay_record.contract_id);
+update contracts set payments_installments_num =calc_annual where contract_payment_type='ANNUAL' and contract_id= pay_record.contract_id;
+
+elsif pay_record.contract_payment_type='HALF_ANNUAL' then 
+calc_half :=trunc(months_between(pay_record.contract_enddate,pay_record.contract_startdate)/6);
+dbms_output.put_line('id '||pay_record.client_id||' half '||calc_half||' contract'||pay_record.contract_id);
+update contracts set payments_installments_num =calc_half where contract_payment_type='HALF_ANNUAL' and  contract_id= pay_record.contract_id;
+
+elsif 
+pay_record.contract_payment_type='QUARTER' then 
+calc_quarter :=trunc(months_between(pay_record.contract_enddate,pay_record.contract_startdate)/3);
+dbms_output.put_line('id '||pay_record.client_id||' quart '||calc_quarter||' contract '||pay_record.contract_id);
+update contracts set payments_installments_num =calc_quarter where contract_payment_type='QUARTER' and contract_id= pay_record.contract_id ;
+
+else 
+Mnthly :=trunc(months_between(pay_record.contract_enddate,pay_record.contract_startdate));
+dbms_output.put_line('id '||pay_record.client_id||' Mnthly '||Mnthly||'  contract '||pay_record.contract_id);
+update contracts set payments_installments_num =Mnthly where contract_payment_type='MONTHLY' and contract_id= pay_record.contract_id;
+end if; 
+end loop;
+end;
+
+
+end;
+select * from user_errors;
